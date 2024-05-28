@@ -3,7 +3,7 @@ import csv
 import cv2
 import streamlit as st
 from paddleocr import PaddleOCR, draw_ocr
-from numpy import np
+from numpy
 def extract_invoice_info(image):
     # Run OCR
     ocr = PaddleOCR(use_gpu=False, lang="en")
