@@ -1,7 +1,12 @@
 import os 
 import csv
+import cv2
 import streamlit as st
 from paddleocr import PaddleOCR, draw_ocr
+
+image = cv2.imread('image.jpg')
+image = cv2.resize(image, (800, 600))  # Resize the image to 800x600
+image = cv2.imread('image.jpg', cv2.IMREAD_GRAYSCALE)  # Convert the image to grayscale
 
 # Load the OCR model (Chinese+English)
 ocr = PaddleOCR(use_gpu=False, lang="en")
