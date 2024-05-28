@@ -1,16 +1,12 @@
-import os 
+import os
 import csv
 import cv2
 import streamlit as st
 from paddleocr import PaddleOCR, draw_ocr
 
-image = cv2.imread('image.jpg', cv2.IMREAD_GRAYSCALE)  # Convert the image to grayscale
-
-# Load the OCR model (Chinese+English)
-ocr = PaddleOCR(use_gpu=False, lang="en")
-
 def extract_invoice_info(image):
     # Run OCR
+    ocr = PaddleOCR(use_gpu=False, lang="en")
     result = ocr.ocr(image)
 
     # Extract relevant information
@@ -21,18 +17,17 @@ def extract_invoice_info(image):
     }
 
     for line in result:
-       line_text = " ".join(word_info[-1] for word_info in line if isinstance(word_info, tuple))
-    if "Invoice" in line_text.upper():
-        # Rest of your code
+        line_text = " ".join(word_info[-1] for word_info in line if isinstance(word_info, tuple))
+        if "Invoice" in line_text.upper():
             for word_info in line:
                 if "Vendor" in word_info[-1].upper():
                     invoice_info["vendor"] = word_info[-1]
                 if "Date" in word_info[-1].upper():
                     invoice_info["date"] = word_info[-1]
                 if "Total" in line_text.upper():
-            for word_info in line:
-                if "Total" in word_info[-1].upper():
-                    invoice_info["total"] = word_info[-1]
+                    for word_info in line:
+                        if "Total" in word_info[-1].upper():
+                            invoice_info["total"] = word_info[-1]
 
     return invoice_info
 
@@ -45,7 +40,7 @@ def main():
 
     if uploaded_file:
         # Read the uploaded image
-        image = uploaded_file.read()
+        image = cv2.imread(uploaded_file)
 
         # Extract invoice information
         invoice_info = extract_invoice_info(image)
