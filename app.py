@@ -4,6 +4,13 @@ import cv2
 import streamlit as st
 from paddleocr import PaddleOCR, draw_ocr
 import numpy as np
+
+from django.shortcuts import get_object_or_404
+
+def product_detail(request, id):
+    product = get_object_or_404(Product, id=id)
+    return render(request, 'product_detail.html', {'product': product})
+
 def extract_invoice_info(image):
     # Run OCR
     ocr = PaddleOCR(use_gpu=False, lang="en")
