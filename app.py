@@ -1,35 +1,48 @@
 import streamlit as st
-import cv2
 from PIL import Image
 import pytesseract
-import spacy
+import cv2
+import numpy as np
+import pandas as pd
 
-# Load the image from the user input
-image = st.file_uploader("Upload your image", type=["jpg", "png"])
+# Function to preprocess image
+def preprocess_image(image_path):
+    # Load image
+    img = cv2.imread(image_path)
+    
+    # Convert to grayscale
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    
+    # Apply adaptive thresholding
+    thresh = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
+            cv2.THRESH_BINARY,11,2)
+    
+    return thresh
 
-# Preprocess the image
-img = cv2.imread(image)
-gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
+# Function to perform OCR and extract data
+def extract_data(image_path):
+    # Preprocess image
+    preprocessed_img = preprocess_image(image_path)
+    
+    # Perform OCR
+    text = pytesseract.image_to_string(preprocessed_img)
+    
+    return text
 
-# Extract text using Tesseract OCR
-text = pytesseract.image_to_string(thresh)
+# Streamlit UI
+st.title('Invoice Data Extraction')
 
-# Preprocess the extracted text using spaCy
-nlp = spacy.load("en_core_web_sm")
-doc = nlp(text)
-
-# Extract invoice information
-invoice_info = []
-for ent in doc.ents:
-    if ent.label_ == "ORGANIZATION":
-        invoice_info.append({"Organization": ent.text})
-
-# Save the extracted information to a .csv file
-import csv
-with open("invoice_info.csv", "w", newline="") as csvfile:
-    writer = csv.writer(csvfile)
-    writer.writerow(["Organization"])
-    writer.writerows(invoice_info)
-
-st.success("Invoice information extracted and saved to invoice_info.csv")
+uploaded_file = st.file_uploader("Choose an invoice image...", type=["jpg", "png"])
+if uploaded_file is not None:
+    # Convert the uploaded file to an image
+    image = Image.open(uploaded_file)
+    st.image(image, caption='Uploaded Invoice', use_column_width=True)
+    
+    # Extract text from the image
+    extracted_text = extract_data(uploaded_file.name)
+    st.write(extracted_text)
+    
+    # Process and save extracted data to a.csv file
+    # Assuming the extracted text contains invoice details in a structured format
+    # You might need to implement custom logic to parse the text and save it to a.csv file
+    pass
