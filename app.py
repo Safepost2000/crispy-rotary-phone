@@ -4,7 +4,31 @@ import pytesseract
 import cv2
 import numpy as np
 import pandas as pd
+import os
+import tempfile
 
+def extract_data(image_path):
+    # Ensure the image path is valid
+    if not os.path.exists(image_path):
+        print(f"Image path does not exist: {image_path}")
+        return None
+    
+    # Temporarily save the uploaded file to access its path
+    with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(image_path)[1]) as temp_file:
+        temp_file.write(uploaded_file.getvalue())
+        temp_file_path = temp_file.name
+    
+    # Now use the temporary file path for image processing
+    preprocessed_img = preprocess_image(temp_file_path)
+    
+    # Don't forget to delete the temporary file after use
+    os.unlink(temp_file_path)
+    
+    # Perform OCR on the preprocessed image
+    text = pytesseract.image_to_string(preprocessed_img)
+    
+    return text
+    
 def preprocess_image_pil(image_path):
     # Use PIL to open the image
     img = Image.open(image_path).convert('L')  # Convert to grayscale
