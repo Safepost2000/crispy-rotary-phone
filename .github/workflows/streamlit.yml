@@ -1,4 +1,0 @@
-deploy:
-  config:
-    tesseract-ocr:
-      enabled: true
