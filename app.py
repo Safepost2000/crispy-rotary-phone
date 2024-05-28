@@ -1,51 +1,66 @@
 import streamlit as st
-import pytesseract
 from PIL import Image
-import cv2
-import concurrent.futures
+import pytesseract
+import numpy as np
+import pandas as pd
 
-def extract_invoice_info(image):
-    # Use pytesseract to extract text from the image
-    text = pytesseract.image_to_string(image)
-    
-    # Analyze the extracted text to identify and extract the relevant invoice information
-    vendor_name = #Extract vendor name
-    date = #Extract date
-    total_amount = #Extract total amount
-    
-    return vendor_name, date, total_amount
+# Set Streamlit page configuration
+st.set_page_config(page_title="Invoice OCR", layout="wide")
 
-@st.cache
-def process_image(image):
-    # Resize the image to optimize performance
-    image = cv2.resize(image, (800, 600))
-    
-    # Use multithreading to perform OCR and data extraction in parallel
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        vendor_name, date, total_amount = executor.submit(extract_invoice_info, image).result()
-    
-    return vendor_name, date, total_amount
+# Function to perform OCR on the uploaded image
+def extract_invoice_data(image):
+    # Convert the image to grayscale
+    gray = np.array(image.convert('L'))
 
-def main():
-    st.title("Invoice OCR Web App")
-    
-    # Allow the user to upload an invoice image
-    uploaded_file = st.file_uploader("Choose an invoice image", type=["jpg", "png", "pdf"])
-    
-    if uploaded_file is not None:
-        # Process the uploaded image
+    # Use Tesseract OCR to extract text from the image
+    text = pytesseract.image_to_string(gray)
+
+    # Split the text into lines
+    lines = text.split('\n')
+
+    # Extract the relevant information from the lines
+    invoice_data = {
+        'Invoice Number': '',
+        'Total Amount': '',
+        'Date': '',
+        'Vendor Name': ''
+    }
+
+    for line in lines:
+        if 'Invoice Number' in line:
+            invoice_data['Invoice Number'] = line.split(':')[1].strip()
+        elif 'Total' in line or 'Amount' in line:
+            invoice_data['Total Amount'] = line.split(':')[1].strip()
+        elif 'Date' in line:
+            invoice_data['Date'] = line.split(':')[1].strip()
+        elif 'Vendor' in line or 'Company' in line:
+            invoice_data['Vendor Name'] = line.split(':')[1].strip()
+
+    return invoice_data
+
+# Streamlit app
+st.title("Invoice OCR")
+
+# File upload
+uploaded_file = st.file_uploader("Choose an invoice image", type=['jpg', 'png', 'pdf'])
+
+if uploaded_file is not None:
+    # Load the image
+    if uploaded_file.type == 'application/pdf':
+        pages = convert_from_bytes(uploaded_file.read())
+        image = pages[0]
+    else:
         image = Image.open(uploaded_file)
-        vendor_name, date, total_amount = process_image(image)
-        
-        # Display the extracted invoice information
-        st.write(f"Vendor Name: {vendor_name}")
-        st.write(f"Date: {date}")
-        st.write(f"Total Amount: {total_amount}")
-        
-        # Allow the user to download the extracted information
-        st.write("\n")
-        st.write("### Download the extracted invoice information:")
-        st.write(f"1. [Download as CSV](data:file/csv;base64,{data})")
 
-if __name__ == "__main__":
-    main()
+    # Extract invoice data
+    invoice_data = extract_invoice_data(image)
+
+    # Display the extracted information
+    st.subheader("Invoice Details")
+    for key, value in invoice_data.items():
+        st.write(f"{key}: {value}")
+
+    # Display the uploaded image
+    st.subheader("Uploaded Invoice")
+    st.image(image, use_column_width=True)
+    
