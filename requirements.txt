@@ -5,4 +5,3 @@ opencv-python-headless
 Pillow
 easyocr
 pdf2image
-tesseract-ocr
