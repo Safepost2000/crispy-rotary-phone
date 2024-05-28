@@ -53,11 +53,12 @@ if uploaded_file is not None:
             st.image(image, caption='Uploaded Image.', use_column_width=True)
             st.write("Extracting text...")
 
-            try:
-                text = pytesseract.image_to_string(image)
-            except pytesseract.pytesseract.TesseractError:
-                st.error("Error using pytesseract: tesseract is not installed or it's not in your PATH. See README file for more information.")
-                text = ""
+            text = ""
+            if pytesseract.get_tesseract_version() is not None:
+                try:
+                    text = pytesseract.image_to_string(image)
+                except Exception as e:
+                    st.error(f"Error using pytesseract: {e}")
 
             if not text.strip():
                 st.write("Using EasyOCR for better handwritten text recognition...")
