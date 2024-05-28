@@ -47,20 +47,20 @@ def main():
 
         # Process the image
         try:
-    extracted_text = process_image(uploaded_file)
-    # Save text to CSV
-    df = pd.DataFrame([extracted_text.split('\n')])
-    csv = df.to_csv(index=False)
-    st.download_button(
-        label="Download data as CSV",
-        data=csv,
-        file_name='extracted_text.csv',
-        mime='text/csv',
-    )
-except ValueError as ve:
-    st.error(str(ve))
-except Exception as e:
-    st.error(f"An unexpected error occurred: {e}")
+            extracted_text = process_image(uploaded_file)
+            # Save text to CSV
+            df = pd.DataFrame([extracted_text.split('\n')])
+            csv = df.to_csv(index=False)
+            st.download_button(
+                label="Download data as CSV",
+                data=csv,
+                file_name='extracted_text.csv',
+                mime='text/csv',
+            )
+        except ValueError as ve:
+            st.error(str(ve))
+        except Exception as e:
+            st.error(f"An unexpected error occurred: {e}")
 
     # Instructions
     st.sidebar.title("Instructions")
