@@ -1,68 +1,54 @@
 import streamlit as st
+import tempfile
 from PIL import Image
 import pytesseract
 import cv2
 import numpy as np
-import pandas as pd
-import easyocr
-
-def preprocess_image_pil(image_path):
-    # Use PIL to open the image
-    img = Image.open(image_path).convert('L')  # Convert to grayscale
-    
-    # Convert PIL Image object to OpenCV matrix
-    img_cv = np.array(img)
-    
-    return img_cv
-    
-# Initialize EasyOCR reader
-reader = easyocr.Reader(['en'])
 
 # Function to preprocess image
-#def preprocess_image(image_path):
+def preprocess_image(image_path):
     # Load image
-  #  img = cv2.imread(image_path)
+    img = cv2.imread(image_path)
+    if img is None:
+        print(f"Failed to load image from {image_path}")
+        return None
     
     # Convert to grayscale
-  #  gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     
     # Apply adaptive thresholding
-   # thresh = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
-        #    cv2.THRESH_BINARY,11,2)
+    thresh = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
+            cv2.THRESH_BINARY,11,2)
     
-    #return thresh
+    return thresh
 
 # Function to perform OCR and extract data
-def extract_data(image_path):
-    # Preprocess image
-    preprocessed_img = preprocess_image(image_path)
+def extract_data(uploaded_file):
+    # Save the uploaded file to a temporary location
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_file:
+        temp_file.write(uploaded_file.getvalue())
+        temp_file_path = temp_file.name
     
-    # Perform OCR with PyTesseract
-    text_tess = pytesseract.image_to_string(preprocessed_img)
+    # Use the temporary file path for image processing
+    preprocessed_img = preprocess_image(temp_file_path)
     
-    # Perform OCR with EasyOCR for better handwriting recognition
-    results_easy = reader.readtext(image_path)
-    text_easy = "\n".join([item[1] for item in results_easy])
+    # Perform OCR on the preprocessed image
+    text = pytesseract.image_to_string(preprocessed_img)
     
-    # Combine texts from both OCR engines
-    combined_text = f"{text_tess}\n{text_easy}"
+    # Clean up the temporary file
+    os.unlink(temp_file_path)
     
-    return combined_text
+    return text
 
 # Streamlit UI
 st.title('Invoice Data Extraction')
 
 uploaded_file = st.file_uploader("Choose an invoice image...", type=["jpg", "png"])
 if uploaded_file is not None:
-    # Convert the uploaded file to an image
+    # Display the uploaded image
     image = Image.open(uploaded_file)
     st.image(image, caption='Uploaded Invoice', use_column_width=True)
     
     # Extract text from the image
-    extracted_text = extract_data(uploaded_file.name)
+    extracted_text = extract_data(uploaded_file)
     st.write(extracted_text)
-    
-    # Process and save extracted data to a.csv file
-    # Assuming the extracted text contains invoice details in a structured format
-    # You might need to implement custom logic to parse the text and save it to a.csv file
-    pass
