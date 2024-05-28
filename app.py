@@ -4,7 +4,7 @@ import streamlit as st
 from paddleocr import PaddleOCR, draw_ocr
 
 # Load the OCR model (Chinese+English)
-ocr = PaddleOCR(use_gpu=False, lang="ch+en")
+ocr = PaddleOCR(use_gpu=False, lang="en")
 
 def extract_invoice_info(image):
     # Run OCR
