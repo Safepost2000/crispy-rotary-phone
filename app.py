@@ -1,102 +1,63 @@
 import streamlit as st
-from PIL import Image
 import pytesseract
+from PIL import Image
 import pandas as pd
 import numpy as np
-import easyocr
-from pdf2image import convert_from_path
-import tempfile
-import os
-import subprocess
+import cv2
 
-st.title("Invoice OCR Web App")
+# Configure Tesseract path
+pytesseract.pytesseract.tesseract_cmd = r'/usr/bin/tesseract'  # Update with your Tesseract path
 
-# Function to check if Poppler is installed
-def check_poppler_installed():
-    try:
-        subprocess.run(["pdftoppm", "-h"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        return True
-    except FileNotFoundError:
-        return False
+def preprocess_image(image):
+    # Convert image to grayscale
+    gray = cv2.cvtColor(np.array(image), cv2.COLOR_BGR2GRAY)
+    # Apply some preprocessing techniques
+    gray = cv2.medianBlur(gray, 3)
+    return gray
 
-# File uploader
-uploaded_file = st.file_uploader("Choose an image or PDF...", type=["jpg", "jpeg", "png", "pdf"])
+def extract_text(image):
+    # Use pytesseract to extract text
+    text = pytesseract.image_to_string(image)
+    return text
 
-# Function to extract invoice information
-def extract_invoice_info(text):
-    lines = text.split('\n')
-    invoice_info = {
-        "Invoice Number": None,
-        "Date": None,
-        "Total Amount": None
-    }
-    for line in lines:
-        if "Invoice" in line:
-            invoice_info["Invoice Number"] = line.split()[-1]
-        if "Date" in line:
-            invoice_info["Date"] = line.split()[-1]
-        if "Total" in line or "Amount" in line:
-            invoice_info["Total Amount"] = line.split()[-1]
-    return invoice_info
+def extract_handwritten_text(image):
+    # For handwritten text, you may need to adjust OCR configuration
+    custom_config = r'--oem 1 --psm 3'
+    text = pytesseract.image_to_string(image, config=custom_config)
+    return text
 
-def pdf_to_images(pdf_bytes):
-    if not check_poppler_installed():
-        raise EnvironmentError("Poppler is not installed or not in your PATH. Please install Poppler to proceed.")
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
-        temp_pdf.write(pdf_bytes)
-        temp_pdf.flush()
-        images = convert_from_path(temp_pdf.name)
-    os.remove(temp_pdf.name)
-    return images
+def process_invoice(image):
+    preprocessed_image = preprocess_image(image)
+    text = extract_text(preprocessed_image)
+    handwritten_text = extract_handwritten_text(preprocessed_image)
+    return text, handwritten_text
 
-# Main processing
-if uploaded_file is not None:
-    try:
-        file_type = uploaded_file.type
+def save_to_csv(data, filename):
+    df = pd.DataFrame(data, columns=['Type', 'Content'])
+    df.to_csv(filename, index=False)
 
-        if file_type == "application/pdf":
-            images = pdf_to_images(uploaded_file.read())
-        else:
-            images = [Image.open(uploaded_file)]
+def main():
+    st.title('Invoice OCR Web App')
+    st.write("Upload an invoice image to extract text and handwritten notes")
 
-        all_text = ""
-        for image in images:
-            st.image(image, caption='Uploaded Image.', use_column_width=True)
-            st.write("Extracting text...")
+    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
 
-            text = ""
-            try:
-                text = pytesseract.image_to_string(image)
-            except pytesseract.pytesseract.TesseractError:
-                st.error("Tesseract is not installed or not found in your PATH. Falling back to EasyOCR.")
+    if uploaded_file is not None:
+        image = Image.open(uploaded_file)
+        st.image(image, caption='Uploaded Invoice', use_column_width=True)
+        st.write("Extracting text...")
+        text, handwritten_text = process_invoice(image)
 
-            if not text.strip():
-                st.write("Using EasyOCR for better handwritten text recognition...")
-                reader = easyocr.Reader(['en'])
-                try:
-                    results = reader.readtext(np.array(image))
-                    text = ' '.join([res[1] for res in results])
-                except Exception as e:
-                    st.error(f"An error occurred with EasyOCR: {e}")
-                    text = ""
+        st.subheader('Extracted Text')
+        st.write(text)
 
-            all_text += text + "\n"
+        st.subheader('Extracted Handwritten Text')
+        st.write(handwritten_text)
 
-        st.text_area("Extracted Text", all_text, height=300)
+        if st.button('Save to CSV'):
+            data = [['Text', text], ['Handwritten Text', handwritten_text]]
+            save_to_csv(data, 'invoice_data.csv')
+            st.success('Data saved to invoice_data.csv')
 
-        invoice_info = extract_invoice_info(all_text)
-        df = pd.DataFrame([invoice_info])
-        st.write("Extracted Invoice Information:")
-        st.dataframe(df)
-
-        csv = df.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label="Download data as CSV",
-            data=csv,
-            file_name='invoice_info.csv',
-            mime='text/csv',
-        )
-    except Exception as e:
-        st.error(f"An error occurred: {e}")
-else:
-    st.write("Please upload an image or PDF file.")
+if __name__ == "__main__":
+    main()
