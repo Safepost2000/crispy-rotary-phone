@@ -40,7 +40,8 @@ def main():
 
     if uploaded_file:
         # Read the uploaded image
-        image = cv2.imread(uploaded_file)
+        image_bytes = uploaded_file.read()
+        image = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), cv2.IMREAD_GRAYSCALE)
 
         # Extract invoice information
         invoice_info = extract_invoice_info(image)
