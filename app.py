@@ -1,6 +1,6 @@
 import os
 import csv
-import cv2
+import csv2
 import streamlit as st
 from paddleocr import PaddleOCR, draw_ocr
 import numpy as np
