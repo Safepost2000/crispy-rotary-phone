@@ -1,71 +1,35 @@
-import os
-import csv
-import cv2
 import streamlit as st
-from paddleocr import PaddleOCR, draw_ocr
-import numpy as np
+import cv2
+from PIL import Image
+import pytesseract
+import spacy
 
-from django.shortcuts import get_object_or_404
+# Load the image from the user input
+image = st.file_uploader("Upload your image", type=["jpg", "png"])
 
-def product_detail(request, id):
-    product = get_object_or_404(Product, id=id)
-    return render(request, 'product_detail.html', {'product': product})
+# Preprocess the image
+img = cv2.imread(image)
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
 
-def extract_invoice_info(image):
-    # Run OCR
-    ocr = PaddleOCR(use_gpu=False, lang="en")
-    result = ocr.ocr(image)
+# Extract text using Tesseract OCR
+text = pytesseract.image_to_string(thresh)
 
-    # Extract relevant information
-    invoice_info = {
-        "vendor": "",
-        "date": "",
-        "total": ""
-    }
+# Preprocess the extracted text using spaCy
+nlp = spacy.load("en_core_web_sm")
+doc = nlp(text)
 
-    for line in result:
-        line_text = " ".join(word_info[-1] for word_info in line if isinstance(word_info, tuple))
-        if "Invoice" in line_text.upper():
-            for word_info in line:
-                if "Vendor" in word_info[-1].upper():
-                    invoice_info["vendor"] = word_info[-1]
-                if "Date" in word_info[-1].upper():
-                    invoice_info["date"] = word_info[-1]
-                if "Total" in line_text.upper():
-                    for word_info in line:
-                        if "Total" in word_info[-1].upper():
-                            invoice_info["total"] = word_info[-1]
+# Extract invoice information
+invoice_info = []
+for ent in doc.ents:
+    if ent.label_ == "ORGANIZATION":
+        invoice_info.append({"Organization": ent.text})
 
-    return invoice_info
+# Save the extracted information to a .csv file
+import csv
+with open("invoice_info.csv", "w", newline="") as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerow(["Organization"])
+    writer.writerows(invoice_info)
 
-def main():
-    st.title("Invoice OCR Web App")
-    st.write("Upload an invoice image to extract information")
-
-    # File uploader
-    uploaded_file = st.file_uploader("Choose an image file", type=["jpg", "jpeg", "png"])
-
-    if uploaded_file:
-        # Read the uploaded image
-        image_bytes = uploaded_file.read()
-        image = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), cv2.IMREAD_GRAYSCALE)
-
-        # Extract invoice information
-        invoice_info = extract_invoice_info(image)
-
-        # Display the extracted information
-        st.write("Extracted Invoice Information:")
-        st.write("Vendor:", invoice_info["vendor"])
-        st.write("Date:", invoice_info["date"])
-        st.write("Total:", invoice_info["total"])
-
-        # Save the extracted information to a CSV file
-        with open("invoice_info.csv", "w", newline="") as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow(["Vendor", "Date", "Total"])
-            writer.writerow([invoice_info["vendor"], invoice_info["date"], invoice_info["total"]])
-
-        st.write("Invoice information saved to `invoice_info.csv`")
-
-if __name__ == "__main__":
-    main()
+st.success("Invoice information extracted and saved to invoice_info.csv")
