@@ -7,8 +7,17 @@ import easyocr
 from pdf2image import convert_from_path
 import tempfile
 import os
+import subprocess
 
 st.title("Invoice OCR Web App")
+
+# Function to check if Poppler is installed
+def check_poppler_installed():
+    try:
+        subprocess.run(["pdftoppm", "-h"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return True
+    except FileNotFoundError:
+        return False
 
 # File uploader
 uploaded_file = st.file_uploader("Choose an image or PDF...", type=["jpg", "jpeg", "png", "pdf"])
@@ -31,6 +40,8 @@ def extract_invoice_info(text):
     return invoice_info
 
 def pdf_to_images(pdf_bytes):
+    if not check_poppler_installed():
+        raise EnvironmentError("Poppler is not installed or not in your PATH. Please install Poppler to proceed.")
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
         temp_pdf.write(pdf_bytes)
         temp_pdf.flush()
