@@ -1,66 +1,64 @@
 import streamlit as st
-from PIL import Image
+import cv2
 import pytesseract
 import numpy as np
 import pandas as pd
 
-# Set Streamlit page configuration
-st.set_page_config(page_title="Invoice OCR", layout="wide")
+# Configure pytesseract to use the installed tesseract executable
+pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'  # Update this path based on your installation
 
-# Function to perform OCR on the uploaded image
-def extract_invoice_data(image):
+def preprocess_image(img):
     # Convert the image to grayscale
-    gray = np.array(image.convert('L'))
-
-    # Use Tesseract OCR to extract text from the image
-    text = pytesseract.image_to_string(gray)
-
-    # Split the text into lines
-    lines = text.split('\n')
-
-    # Extract the relevant information from the lines
-    invoice_data = {
-        'Invoice Number': '',
-        'Total Amount': '',
-        'Date': '',
-        'Vendor Name': ''
-    }
-
-    for line in lines:
-        if 'Invoice Number' in line:
-            invoice_data['Invoice Number'] = line.split(':')[1].strip()
-        elif 'Total' in line or 'Amount' in line:
-            invoice_data['Total Amount'] = line.split(':')[1].strip()
-        elif 'Date' in line:
-            invoice_data['Date'] = line.split(':')[1].strip()
-        elif 'Vendor' in line or 'Company' in line:
-            invoice_data['Vendor Name'] = line.split(':')[1].strip()
-
-    return invoice_data
-
-# Streamlit app
-st.title("Invoice OCR")
-
-# File upload
-uploaded_file = st.file_uploader("Choose an invoice image", type=['jpg', 'png', 'pdf'])
-
-if uploaded_file is not None:
-    # Load the image
-    if uploaded_file.type == 'application/pdf':
-        pages = convert_from_bytes(uploaded_file.read())
-        image = pages[0]
-    else:
-        image = Image.open(uploaded_file)
-
-    # Extract invoice data
-    invoice_data = extract_invoice_data(image)
-
-    # Display the extracted information
-    st.subheader("Invoice Details")
-    for key, value in invoice_data.items():
-        st.write(f"{key}: {value}")
-
-    # Display the uploaded image
-    st.subheader("Uploaded Invoice")
-    st.image(image, use_column_width=True)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     
+    # Apply thresholding to enhance handwritten text
+    _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    
+    # Apply morphological operations to remove noise
+    kernel = np.ones((3,3), np.uint8)
+    opening = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel, iterations=1)
+    
+    return opening
+
+def process_image(image_file):
+    # Read the image file
+    img = cv2.imdecode(np.frombuffer(image_file.read(), np.uint8), 1)
+    # Preprocess the image
+    processed_img = preprocess_image(img)
+    # Perform OCR
+    text = pytesseract.image_to_string(processed_img, config='--psm 6')
+    return text
+
+def main():
+    st.title("Enhanced Invoice OCR App")
+
+    # File uploader
+    uploaded_file = st.file_uploader("Choose an invoice image...", type=["jpg", "jpeg", "png"])
+
+    if uploaded_file is not None:
+        # Display the uploaded image
+        st.image(uploaded_file, caption='Uploaded Image', use_column_width=True)
+
+        # Process the image
+        try:
+            extracted_text = process_image(uploaded_file)
+            # Save text to CSV
+            df = pd.DataFrame([extracted_text.split('\n')])
+            csv = df.to_csv(index=False)
+            st.download_button(
+                label="Download data as CSV",
+                data=csv,
+                file_name='extracted_text.csv',
+                mime='text/csv',
+            )
+        except Exception as e:
+            st.error(f"Error processing the image: {e}")
+
+    # Instructions
+    st.sidebar.title("Instructions")
+    st.sidebar.write("1. Upload an image of an invoice.")
+    st.sidebar.write("2. Wait for the OCR to process the image.")
+    st.sidebar.write("3. Download the extracted text as a CSV file.")
+
+if __name__ == "__main__":
+    main()
