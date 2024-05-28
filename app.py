@@ -54,11 +54,10 @@ if uploaded_file is not None:
             st.write("Extracting text...")
 
             text = ""
-            if pytesseract.get_tesseract_version() is not None:
-                try:
-                    text = pytesseract.image_to_string(image)
-                except Exception as e:
-                    st.error(f"Error using pytesseract: {e}")
+            try:
+                text = pytesseract.image_to_string(image)
+            except pytesseract.pytesseract.TesseractError:
+                st.error("Tesseract is not installed or not found in your PATH. Falling back to EasyOCR.")
 
             if not text.strip():
                 st.write("Using EasyOCR for better handwritten text recognition...")
