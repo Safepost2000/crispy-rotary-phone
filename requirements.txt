@@ -6,3 +6,4 @@ pandas
 easyocr
 numpy
 pymupdf
+nltk
