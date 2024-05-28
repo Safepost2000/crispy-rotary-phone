@@ -9,9 +9,9 @@ def extract_invoice_info(image):
     text = pytesseract.image_to_string(image)
     
     # Analyze the extracted text to identify and extract the relevant invoice information
-    vendor_name = # Extract vendor name
-    date = # Extract date
-    total_amount = # Extract total amount
+    vendor_name = #Extract vendor name
+    date = #Extract date
+    total_amount = #Extract total amount
     
     return vendor_name, date, total_amount
 
