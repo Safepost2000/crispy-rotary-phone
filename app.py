@@ -11,7 +11,7 @@ ocr = PaddleOCR(use_gpu=False, lang="en")
 
 def extract_invoice_info(image):
     # Run OCR
-    result = ocr.ocr(image, use_gpu=False)
+    result = ocr.ocr(image)
 
     # Extract relevant information
     invoice_info = {
