@@ -1,4 +1,5 @@
-streamlit==1.11.0
-easyocr==1.6.2
-opencv-python==4.6.0.66
-Pillow==9.2.0
+streamlit
+pytesseract
+pandas
+opencv-python-headless
+Pillow
