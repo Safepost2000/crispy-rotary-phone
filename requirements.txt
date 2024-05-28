@@ -3,6 +3,5 @@ pytesseract
 pandas
 opencv-python-headless
 Pillow
-numpy
 easyocr
 pdf2image
