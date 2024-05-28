@@ -4,11 +4,12 @@ import pytesseract
 import pandas as pd
 import numpy as np
 import easyocr
+from pdf2image import convert_from_path
 
 st.title("Invoice OCR Web App")
 
 # File uploader
-uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png", "pdf"])
+uploaded_file = st.file_uploader("Choose an image or PDF...", type=["jpg", "jpeg", "png", "pdf"])
 
 # Function to extract invoice information
 def extract_invoice_info(text):
@@ -30,31 +31,41 @@ def extract_invoice_info(text):
 # Main processing
 if uploaded_file is not None:
     try:
-        # Read image
-        image = Image.open(uploaded_file)
-        st.image(image, caption='Uploaded Image.', use_column_width=True)
-        st.write("")
-        st.write("Extracting text...")
-        
-        # Use pytesseract for OCR
-        try:
-            text = pytesseract.image_to_string(image)
-        except Exception as e:
-            st.error(f"Error using pytesseract: {e}")
-            text = ""
+        file_type = uploaded_file.type
 
-        # Fallback to EasyOCR if pytesseract fails or for better accuracy on handwritten text
-        if not text.strip():
-            st.write("Using EasyOCR for better handwritten text recognition...")
-            reader = easyocr.Reader(['en'])
-            results = reader.readtext(np.array(image))
-            text = ' '.join([res[1] for res in results])
-        
+        if file_type == "application/pdf":
+            # Convert PDF to images
+            images = convert_from_path(uploaded_file)
+        else:
+            # Read image directly
+            images = [Image.open(uploaded_file)]
+
+        all_text = ""
+        for image in images:
+            st.image(image, caption='Uploaded Image.', use_column_width=True)
+            st.write("Extracting text...")
+            
+            # Use pytesseract for OCR
+            try:
+                text = pytesseract.image_to_string(image)
+            except Exception as e:
+                st.error(f"Error using pytesseract: {e}")
+                text = ""
+
+            # Fallback to EasyOCR if pytesseract fails or for better accuracy on handwritten text
+            if not text.strip():
+                st.write("Using EasyOCR for better handwritten text recognition...")
+                reader = easyocr.Reader(['en'])
+                results = reader.readtext(np.array(image))
+                text = ' '.join([res[1] for res in results])
+            
+            all_text += text + "\n"
+
         # Display extracted text
-        st.text_area("Extracted Text", text, height=300)
+        st.text_area("Extracted Text", all_text, height=300)
         
         # Extract and display invoice information
-        invoice_info = extract_invoice_info(text)
+        invoice_info = extract_invoice_info(all_text)
         df = pd.DataFrame([invoice_info])
         st.write("Extracted Invoice Information:")
         st.dataframe(df)
@@ -70,4 +81,4 @@ if uploaded_file is not None:
     except Exception as e:
         st.error(f"An error occurred: {e}")
 else:
-    st.write("Please upload an image file.")
+    st.write("Please upload an image or PDF file.")
