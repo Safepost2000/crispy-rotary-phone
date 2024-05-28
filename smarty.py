@@ -40,7 +40,7 @@ def preprocess_image(image):
     image = ImageOps.grayscale(image)  # Convert to grayscale
     enhancer = ImageEnhance.Contrast(image)
     image = enhancer.enhance(2)  # Enhance contrast
-    image = image.resize((image.width * 2, image.height * 2), Image.ANTIALIAS)  # Resize to improve accuracy
+    image = image.resize((image.width * 2, image.height * 2), Image.LANCZOS)  # Resize to improve accuracy
     return image
 
 def extract_text_from_image(image):
@@ -115,16 +115,22 @@ def main():
             st.image(image, caption='Uploaded Image', use_column_width=True)
             st.write("")
             st.write("Extracting text...")
-            text = extract_text_from_image(image)
-            st.write(text)
-            info = extract_information(text)
-            display_info(info)
+            try:
+                text = extract_text_from_image(image)
+                st.write(text)
+                info = extract_information(text)
+                display_info(info)
+            except Exception as e:
+                st.error(f"Error processing image: {e}")
         elif file_type == "application/pdf":
             st.write("Extracting text from PDF...")
-            text = extract_text_from_pdf(file)
-            st.write(text)
-            info = extract_information(text)
-            display_info(info)
+            try:
+                text = extract_text_from_pdf(file)
+                st.write(text)
+                info = extract_information(text)
+                display_info(info)
+            except Exception as e:
+                st.error(f"Error processing PDF: {e}")
 
 if __name__ == "__main__":
     main()
