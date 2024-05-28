@@ -1,8 +1,5 @@
-numpy
+
 streamlit
-opencv-python
 pytesseract
-spacy
-en_core_web_sm
-Pillow
-nltk
+opencv-python
+pandas
