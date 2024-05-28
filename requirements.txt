@@ -6,3 +6,4 @@ numpy
 pandas
 easyocr
 opencv-python-headless
+django
