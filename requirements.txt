@@ -1,8 +1,6 @@
 streamlit
 pytesseract
-pandas
 opencv-python-headless
-Pillow
-easyocr
-pdf2image
-Poppler-utils
+pillow
+numpy
+pandas
