@@ -30,7 +30,7 @@ def extract_invoice_info(image):
                 if "Date" in word_info[-1].upper():
                     invoice_info["date"] = word_info[-1]
                 if "Total" in line_text.upper():
-           for word_info in line:
+            for word_info in line:
                 if "Total" in word_info[-1].upper():
                     invoice_info["total"] = word_info[-1]
 
