@@ -2,6 +2,7 @@ import streamlit as st
 import cv2
 import pytesseract
 import pandas as pd
+import numpy as np
 
 st.title('Invoice OCR Web App')
 
