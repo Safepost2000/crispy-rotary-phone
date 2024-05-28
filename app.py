@@ -6,22 +6,31 @@ import numpy as np
 import pandas as pd
 import easyocr
 
+def preprocess_image_pil(image_path):
+    # Use PIL to open the image
+    img = Image.open(image_path).convert('L')  # Convert to grayscale
+    
+    # Convert PIL Image object to OpenCV matrix
+    img_cv = np.array(img)
+    
+    return img_cv
+    
 # Initialize EasyOCR reader
 reader = easyocr.Reader(['en'])
 
 # Function to preprocess image
-def preprocess_image(image_path):
+#def preprocess_image(image_path):
     # Load image
-    img = cv2.imread(image_path)
+  #  img = cv2.imread(image_path)
     
     # Convert to grayscale
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+  #  gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     
     # Apply adaptive thresholding
-    thresh = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
-            cv2.THRESH_BINARY,11,2)
+   # thresh = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
+        #    cv2.THRESH_BINARY,11,2)
     
-    return thresh
+    #return thresh
 
 # Function to perform OCR and extract data
 def extract_data(image_path):
