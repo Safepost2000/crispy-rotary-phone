@@ -8,12 +8,30 @@ import nltk
 from nltk import word_tokenize, pos_tag, ne_chunk
 from nltk.corpus import stopwords
 
-# Download necessary NLTK data
-nltk.download('punkt')
-nltk.download('averaged_perceptron_tagger')
-nltk.download('maxent_ne_chunker')
-nltk.download('words')
-nltk.download('stopwords')
+# Ensure necessary NLTK data is downloaded
+def download_nltk_data():
+    try:
+        nltk.data.find('tokenizers/punkt')
+    except LookupError:
+        nltk.download('punkt', quiet=True)
+    try:
+        nltk.data.find('taggers/averaged_perceptron_tagger')
+    except LookupError:
+        nltk.download('averaged_perceptron_tagger', quiet=True)
+    try:
+        nltk.data.find('chunkers/maxent_ne_chunker')
+    except LookupError:
+        nltk.download('maxent_ne_chunker', quiet=True)
+    try:
+        nltk.data.find('corpora/words')
+    except LookupError:
+        nltk.download('words', quiet=True)
+    try:
+        nltk.data.find('corpora/stopwords')
+    except LookupError:
+        nltk.download('stopwords', quiet=True)
+
+download_nltk_data()
 
 # Initialize EasyOCR reader
 reader = easyocr.Reader(['en'])
