@@ -3,3 +3,4 @@ streamlit
 pytesseract
 opencv-python-headless
 pandas
+easyocr
