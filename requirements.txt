@@ -1,5 +1,5 @@
-streamlit==1.11.0
-easyocr==1.6.2
-opencv-python==4.6.0.66
-Pillow==9.2.0
-python-csv==0.0.20
+streamlit
+easyocr
+opencv-python
+Pillow
+python-csv
