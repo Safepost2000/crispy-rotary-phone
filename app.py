@@ -2,13 +2,15 @@ import streamlit as st
 import easyocr
 from PIL import Image
 import fitz  # PyMuPDF
+import numpy as np
 import tempfile
 
 # Initialize EasyOCR reader
 reader = easyocr.Reader(['en'])
 
 def extract_text_from_image(image):
-    result = reader.readtext(image)
+    image_np = np.array(image)  # Convert PIL image to NumPy array
+    result = reader.readtext(image_np)
     return ' '.join([text for _, text, _ in result])
 
 def extract_text_from_pdf(pdf_file):
