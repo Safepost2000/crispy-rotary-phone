@@ -5,4 +5,6 @@ pillow
 numpy
 pandas
 pdf2image
-tesseract-ocr
+tesseract-ocr 
+libtesseract-dev 
+libleptonica-dev
