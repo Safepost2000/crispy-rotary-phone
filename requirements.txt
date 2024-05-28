@@ -2,6 +2,6 @@ streamlit==1.7.0
 opencv-python==4.5.1.48
 pytesseract==0.3.7
 spacy==3.2.2
-en_core_web_sm==3.2.0
+en_core_web_sm
 Pillow==8.4.0
 nltk==3.9.2
