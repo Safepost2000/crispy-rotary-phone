@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 st.title('Invoice OCR Web App')
-
+pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'  # Path to the Tesseract executable
 uploaded_file = st.file_uploader("Upload Invoice Image", type=["jpg", "png", "jpeg"])
 
 if uploaded_file is not None:
