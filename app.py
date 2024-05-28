@@ -1,23 +1,51 @@
 import streamlit as st
-import cv2
 import pytesseract
-import pandas as pd
-import numpy as np
+from PIL import Image
+import cv2
+import concurrent.futures
 
-st.title('Invoice OCR Web App')
-pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'  # Path to the Tesseract executable
-uploaded_file = st.file_uploader("Upload Invoice Image", type=["jpg", "png", "jpeg"])
+def extract_invoice_info(image):
+    # Use pytesseract to extract text from the image
+    text = pytesseract.image_to_string(image)
+    
+    # Analyze the extracted text to identify and extract the relevant invoice information
+    vendor_name = # Extract vendor name
+    date = # Extract date
+    total_amount = # Extract total amount
+    
+    return vendor_name, date, total_amount
 
-if uploaded_file is not None:
-    image = cv2.imdecode(np.fromstring(uploaded_file.read(), np.uint8), cv2.IMREAD_COLOR)
-    st.image(image, caption='Uploaded Image', use_column_width=True)
+@st.cache
+def process_image(image):
+    # Resize the image to optimize performance
+    image = cv2.resize(image, (800, 600))
+    
+    # Use multithreading to perform OCR and data extraction in parallel
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        vendor_name, date, total_amount = executor.submit(extract_invoice_info, image).result()
+    
+    return vendor_name, date, total_amount
 
-    extracted_text = pytesseract.image_to_string(image)
-    st.write('Extracted Text:')
-    st.write(extracted_text)
+def main():
+    st.title("Invoice OCR Web App")
+    
+    # Allow the user to upload an invoice image
+    uploaded_file = st.file_uploader("Choose an invoice image", type=["jpg", "png", "pdf"])
+    
+    if uploaded_file is not None:
+        # Process the uploaded image
+        image = Image.open(uploaded_file)
+        vendor_name, date, total_amount = process_image(image)
+        
+        # Display the extracted invoice information
+        st.write(f"Vendor Name: {vendor_name}")
+        st.write(f"Date: {date}")
+        st.write(f"Total Amount: {total_amount}")
+        
+        # Allow the user to download the extracted information
+        st.write("\n")
+        st.write("### Download the extracted invoice information:")
+        st.write(f"1. [Download as CSV](data:file/csv;base64,{data})")
 
-    # Save extracted text to a .csv file
-    if st.button('Save as CSV'):
-        df = pd.DataFrame({'Extracted Text': [extracted_text]})
-        df.to_csv('extracted_invoice_info.csv', index=False)
-        st.success('Data saved to extracted_invoice_info.csv')
+if __name__ == "__main__":
+    main()
