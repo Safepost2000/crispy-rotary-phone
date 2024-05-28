@@ -21,7 +21,7 @@ def extract_invoice_info(image):
     }
 
     for line in result:
-    line_text = " ".join(word_info[-1] for word_info in line)
+    line_text = " ".join(word_info[-1] for word_info in line if isinstance(word_info, tuple))
     if "Invoice" in line_text.upper():
         # Rest of your code
             for word_info in line:
