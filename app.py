@@ -4,63 +4,41 @@ import pytesseract
 import cv2
 import numpy as np
 import pandas as pd
-import os
-import tempfile
+import easyocr
 
-def extract_data(image_path):
-    # Ensure the image path is valid
-    if not os.path.exists(image_path):
-        print(f"Image path does not exist: {image_path}")
-        return None
-    
-    # Temporarily save the uploaded file to access its path
-    with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(image_path)[1]) as temp_file:
-        temp_file.write(uploaded_file.getvalue())
-        temp_file_path = temp_file.name
-    
-    # Now use the temporary file path for image processing
-    preprocessed_img = preprocess_image(temp_file_path)
-    
-    # Don't forget to delete the temporary file after use
-    os.unlink(temp_file_path)
-    
-    # Perform OCR on the preprocessed image
-    text = pytesseract.image_to_string(preprocessed_img)
-    
-    return text
-    
-def preprocess_image_pil(image_path):
-    # Use PIL to open the image
-    img = Image.open(image_path).convert('L')  # Convert to grayscale
-    
-    # Convert PIL Image object to OpenCV matrix
-    img_cv = np.array(img)
-    
-    return img_cv
-    
+# Initialize EasyOCR reader
+reader = easyocr.Reader(['en'])
+
 # Function to preprocess image
-#def preprocess_image(image_path):
+def preprocess_image(image_path):
     # Load image
-    #img = cv2.imread(image_path)
+    img = cv2.imread(image_path)
     
     # Convert to grayscale
-    #gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     
     # Apply adaptive thresholding
-    #thresh = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
-      #      cv2.THRESH_BINARY,11,2)
+    thresh = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
+            cv2.THRESH_BINARY,11,2)
     
-   # return thresh
+    return thresh
 
 # Function to perform OCR and extract data
 def extract_data(image_path):
     # Preprocess image
     preprocessed_img = preprocess_image(image_path)
     
-    # Perform OCR
-    text = pytesseract.image_to_string(preprocessed_img)
+    # Perform OCR with PyTesseract
+    text_tess = pytesseract.image_to_string(preprocessed_img)
     
-    return text
+    # Perform OCR with EasyOCR for better handwriting recognition
+    results_easy = reader.readtext(image_path)
+    text_easy = "\n".join([item[1] for item in results_easy])
+    
+    # Combine texts from both OCR engines
+    combined_text = f"{text_tess}\n{text_easy}"
+    
+    return combined_text
 
 # Streamlit UI
 st.title('Invoice Data Extraction')
