@@ -1,9 +1,7 @@
 Pillow
 streamlit
-pytesseract
 opencv-python-headless
 pandas
 easyocr
 numpy
 pymupdf
-nltk
